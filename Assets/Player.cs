@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Unity.Netcode;
 using UnityEngine;
 
@@ -5,48 +6,58 @@ public class Player : NetworkBehaviour
 {
     public string playerName;
 
-    public int chosenNumber = -10;
-
-    public int score = 0;
-
-    public bool isReady = false;
+    // Synced variables
+    public NetworkVariable<int> chosenNumber = new NetworkVariable<int>(-10);
+    public NetworkVariable<bool> isReady = new NetworkVariable<bool>(false);
 
     public GameManager gameManager;
 
-    private FirstPersonMovement _controller;
-    private Camera _camera;
-    private Animator _animator;
-
     public override void OnNetworkSpawn()
     {
-        _controller = GetComponent<FirstPersonMovement>();
-        _camera = GetComponentInChildren<Camera>();
+        FirstPersonMovement controller = GetComponent<FirstPersonMovement>();
+        Camera cam = GetComponentInChildren<Camera>();
+        FirstPersonAudio audio = GetComponentInChildren<FirstPersonAudio>();
+        GroundCheck ground = GetComponentInChildren<GroundCheck>();
+        AudioListener listener = GetComponentInChildren<AudioListener>();
 
+        Cursor.visible = false;
+        Cursor.lockState = CursorLockMode.Locked;
         if (!IsOwner)
         {
-            _camera.enabled = false;
-            
+            if (cam != null) cam.enabled = false; // only enable for owner
+            if (controller != null) controller.enabled = false; // only enable for owner
+            if (audio != null) audio.enabled = false; // only enable for owner
+            if (ground != null) ground.enabled = false; // only enable for owner
+            if (listener != null) listener.enabled = false; // only enable for owner
         }
+        print($"Player spawned. Owner: {IsOwner}, ClientId: {OwnerClientId}");
     }
+
     void Update()
     {
-        if (!IsOwner)
+        if (!IsOwner) return; // only the local player can press keys
+
+        if (!isReady.Value && Input.GetKeyDown(KeyCode.H))
         {
-            return;
-        }
-        if (!isReady && Input.GetKeyDown(KeyCode.H))
-        {
-            PressReady(); // same function you used for the button
+            PressReady();
         }
     }
+
     public void PressReady()
     {
-        isReady = true;
-        Debug.Log(name + " is ready!");
-
-        gameManager.CheckAllPlayersReady();
+        if (!IsOwner) return;
+        PressReadyServerRpc();
     }
 
+    [ServerRpc(RequireOwnership = true)]
+    void PressReadyServerRpc()
+    {
+        isReady.Value = true;
+        print(playerName + " is ready!");
 
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.CheckAllPlayersReady();
+        }
+    }
 }
-

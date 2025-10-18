@@ -22,7 +22,6 @@ public class FirstPersonMovement : MonoBehaviour
         // Get the rigidbody on this.
         rigidbody = GetComponent<Rigidbody>();
     }
-
     void FixedUpdate()
     {
         // Update IsRunning from input.
