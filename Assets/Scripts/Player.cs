@@ -10,8 +10,6 @@ public class Player : NetworkBehaviour
     public NetworkVariable<int> chosenNumber = new NetworkVariable<int>(-10);
     public NetworkVariable<bool> isReady = new NetworkVariable<bool>(false);
 
-    public GameManager gameManager;
-
     public override void OnNetworkSpawn()
     {
         FirstPersonMovement controller = GetComponent<FirstPersonMovement>();

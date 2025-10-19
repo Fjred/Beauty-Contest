@@ -1,8 +1,9 @@
+using System;
 using System.Collections.Generic;
-using UnityEngine;
 using Unity.Netcode;
+using UnityEngine;
 
-public class GameManager : MonoBehaviour
+public class GameManager : NetworkBehaviour
 {
     public static GameManager Instance { get; private set; }
 
@@ -11,6 +12,9 @@ public class GameManager : MonoBehaviour
     public List<Player> players = new List<Player>();
 
     bool allowToPick = false;
+
+    public bool generateButtons = false;
+    public ButtonGrid buttonScript;
 
     void Awake()
     {
@@ -59,12 +63,14 @@ public class GameManager : MonoBehaviour
         {
             if (!p.isReady.Value) return;
         }
-        StartGame();
+        StartGameClientRpc();
     }
 
-    void StartGame()
+    [ClientRpc]
+    void StartGameClientRpc()
     {
-        Debug.Log("Game Started!");
+        Debug.Log("Game Started on: " + NetworkManager.Singleton.LocalClientId);
         allowToPick = true;
+        buttonScript.GenerateButtons(); // now runs on ALL clients
     }
 }

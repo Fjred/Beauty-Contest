@@ -928,6 +928,7 @@ GameObject:
   - component: {fileID: 1898054675}
   - component: {fileID: 1898054674}
   - component: {fileID: 1898054673}
+  - component: {fileID: 1898054678}
   m_Layer: 5
   m_Name: Canvas
   m_TagString: Untagged
@@ -1033,6 +1034,20 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0, y: 0}
+--- !u!114 &1898054678
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1898054672}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 42d0d56416fb80342bee4ee91ce2c07b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  buttonPrefab: {fileID: 5728350199526157380, guid: 83359981273ad554fb5209fcb26b638e, type: 3}
+  totalButtons: 100
 --- !u!1 &2006881996
 GameObject:
   m_ObjectHideFlags: 0
@@ -1042,6 +1057,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2006881997}
+  - component: {fileID: 2006881999}
   - component: {fileID: 2006881998}
   m_Layer: 0
   m_Name: GameManager
@@ -1077,8 +1093,36 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 20be9c0234eecf04c9e85483803f5bf5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  ShowTopMostFoldoutHeaderGroup: 1
   playerPrefab: {fileID: 5278975275587467441, guid: 9c122c4e1ab05114da6a22d842ff56c3, type: 3}
   players: []
+  generateButtons: 0
+  buttonScript: {fileID: 1898054678}
+--- !u!114 &2006881999
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2006881996}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  GlobalObjectIdHash: 240856556
+  InScenePlacedSourceGlobalObjectIdHash: 0
+  DeferredDespawnTick: 0
+  Ownership: 1
+  AlwaysReplicateAsRoot: 0
+  SynchronizeTransform: 1
+  ActiveSceneSynchronization: 0
+  SceneMigrationSynchronization: 0
+  SpawnWithObservers: 1
+  DontDestroyWithOwner: 0
+  AutoObjectParentSync: 1
+  SyncOwnerTransformWhenParented: 1
+  AllowOwnerToParent: 0
 --- !u!1 &2069701767
 GameObject:
   m_ObjectHideFlags: 0
