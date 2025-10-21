@@ -6,18 +6,19 @@ using UnityEngine.UI;
 
 
 public class ButtonGrid : MonoBehaviour
-{
+{ 
+    [Header("Button essentials")]
     [SerializeField] private GameObject buttonPrefab;
     [SerializeField] private int totalButtons = 101;
 
     private List<Button> buttons = new List<Button>();
     private bool generated = false;
 
-    private int multiplier=10;
-
+    [Header("Button starting X and Y")]
     [SerializeField] int startingX;
     [SerializeField] int startingY;
 
+    private int chosenNumber;
 
     // ✅ Call this when you want to spawn the buttons
     public void GenerateButtons()
@@ -47,8 +48,6 @@ public class ButtonGrid : MonoBehaviour
             x = startingX + numX * 35;
             y = startingY - numY * 35;
 
-            Debug.Log(x);
-            Debug.Log(y);
             RectTransform rect = btnObj.GetComponent<RectTransform>();
             rect.anchorMin = new Vector2(0.5f, 0.5f);
             rect.anchorMax = new Vector2(0.5f, 0.5f);
@@ -66,31 +65,59 @@ public class ButtonGrid : MonoBehaviour
         }
 
         generated = true;
+
+        Cursor.visible = true;
+        Cursor.lockState = CursorLockMode.None;
     }
 
     private void OnNumberClicked(int num)
     {
         Debug.Log("Clicked: " + num);
-        // your logic per button
+
+        Cursor.visible = false;
+        Cursor.lockState = CursorLockMode.Locked;
+
+        chosenNumber = num;
+
+        Player localPlayer = null;
+
+        foreach (var p in FindObjectsOfType<Player>())
+        {
+            if (p.IsOwner)
+            {
+                localPlayer = p;
+                break;
+            }
+        }
+
+        if (localPlayer != null)
+        {
+            localPlayer.ChooseNumberServerRpc(num);
+        }
+        DeactivateButtons();
     }
 
-    public void ActivateButton(int num)
+    public void ActivateButtons(int num)
     {
-        if (num >= 0 && num < buttons.Count)
-            buttons[num].interactable = true;
+        foreach (Button btn in buttons)
+        {
+            btn.gameObject.SetActive(true);
+        }
     }
 
-    public void DeactivateButton(int num)
+    public void DeactivateButtons()
     {
-        if (num >= 0 && num < buttons.Count)
-            buttons[num].interactable = false;
+        foreach (Button btn in buttons)
+        {
+            btn.gameObject.SetActive(false);
+        }
     }
 
     public void DestroyAllButtons()
     {
-        foreach (var btn in buttons)
+        foreach (Button btn in buttons)
             Destroy(btn.gameObject);
-
+         
         buttons.Clear();
         generated = false;
     }

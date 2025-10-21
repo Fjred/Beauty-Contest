@@ -11,8 +11,6 @@ public class GameManager : NetworkBehaviour
     public GameObject playerPrefab;
     public List<Player> players = new List<Player>();
 
-    bool allowToPick = false;
-
     public bool generateButtons = false;
     public ButtonGrid buttonScript;
 
@@ -34,7 +32,7 @@ public class GameManager : NetworkBehaviour
         // Make sure prefab is registered first
         NetworkManager.Singleton.AddNetworkPrefab(playerPrefab);
 
-        // Spawn players on client connect
+        // Spawn players on client connect 
         NetworkManager.Singleton.OnClientConnectedCallback += (clientId) =>
         {
             if (!NetworkManager.Singleton.IsServer) return;
@@ -70,7 +68,7 @@ public class GameManager : NetworkBehaviour
     void StartGameClientRpc()
     {
         Debug.Log("Game Started on: " + NetworkManager.Singleton.LocalClientId);
-        allowToPick = true;
+
         buttonScript.GenerateButtons(); // now runs on ALL clients
     }
 }

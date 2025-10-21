@@ -8,6 +8,7 @@ public class Player : NetworkBehaviour
 
     // Synced variables
     public NetworkVariable<int> chosenNumber = new NetworkVariable<int>(-10);
+    public NetworkVariable<int> lives = new NetworkVariable<int>(-10);
     public NetworkVariable<bool> isReady = new NetworkVariable<bool>(false);
 
     public override void OnNetworkSpawn()
@@ -57,5 +58,11 @@ public class Player : NetworkBehaviour
         {
             GameManager.Instance.CheckAllPlayersReady();
         }
+    }
+
+    [ServerRpc(RequireOwnership = true)]
+    public void ChooseNumberServerRpc(int num)
+    {
+        chosenNumber.Value = num;
     }
 }
