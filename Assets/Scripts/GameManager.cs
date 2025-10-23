@@ -12,7 +12,7 @@ public class GameManager : NetworkBehaviour
     public List<Player> players = new List<Player>();
 
     public bool generateButtons = false;
-    public ButtonGrid buttonScript;
+    public PlayerUI playerUI;
 
     void Awake()
     {
@@ -69,6 +69,6 @@ public class GameManager : NetworkBehaviour
     {
         Debug.Log("Game Started on: " + NetworkManager.Singleton.LocalClientId);
 
-        buttonScript.GenerateButtons(); // now runs on ALL clients
+        BeautyContestLogic.Instance.StartGame();
     }
 }

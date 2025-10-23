@@ -1,11 +1,12 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using TMPro;
-using Unity.Netcode;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.UI;
 
 
-public class ButtonGrid : MonoBehaviour
+public class PlayerUI : MonoBehaviour
 { 
     [Header("Button essentials")]
     [SerializeField] private GameObject buttonPrefab;
@@ -19,8 +20,9 @@ public class ButtonGrid : MonoBehaviour
     [SerializeField] int startingY;
 
     private int chosenNumber;
-
-    // ✅ Call this when you want to spawn the buttons
+    [Header("Health essentials")]
+    [SerializeField] private GameObject healthUIPrefab;
+    private GameObject hlthObj;
     public void GenerateButtons()
     {
         if (generated) return; // prevent double spawning
@@ -72,13 +74,6 @@ public class ButtonGrid : MonoBehaviour
 
     private void OnNumberClicked(int num)
     {
-        Debug.Log("Clicked: " + num);
-
-        Cursor.visible = false;
-        Cursor.lockState = CursorLockMode.Locked;
-
-        chosenNumber = num;
-
         Player localPlayer = null;
 
         foreach (var p in FindObjectsOfType<Player>())
@@ -89,6 +84,12 @@ public class ButtonGrid : MonoBehaviour
                 break;
             }
         }
+        Debug.Log("Clicked: " + num);
+
+        Cursor.visible = false;
+        Cursor.lockState = CursorLockMode.Locked;
+
+        chosenNumber = num;
 
         if (localPlayer != null)
         {
@@ -120,5 +121,23 @@ public class ButtonGrid : MonoBehaviour
          
         buttons.Clear();
         generated = false;
+    }
+
+    public void GenerateHealthUI()
+    {
+        hlthObj = Instantiate(healthUIPrefab, transform);
+        RectTransform rect = hlthObj.GetComponent<RectTransform>();
+        rect.anchorMin = new Vector2(0f, 1f);
+        rect.anchorMax = new Vector2(0f, 1f);
+        rect.pivot = new Vector2(0f, 1f);
+
+        rect.anchoredPosition = new Vector2(100, -50);
+
+        UpdateHealthText(5);
+
+    }
+    public void UpdateHealthText(int amount)
+    {
+        hlthObj.GetComponentInChildren<TextMeshProUGUI>().text = amount.ToString();
     }
 }

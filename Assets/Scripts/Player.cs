@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using Unity.Netcode;
+using Unity.VisualScripting;
 using UnityEngine;
 
 public class Player : NetworkBehaviour
@@ -8,8 +9,9 @@ public class Player : NetworkBehaviour
 
     // Synced variables
     public NetworkVariable<int> chosenNumber = new NetworkVariable<int>(-10);
-    public NetworkVariable<int> lives = new NetworkVariable<int>(-10);
+    public NetworkVariable<int> lives = new NetworkVariable<int>(5);
     public NetworkVariable<bool> isReady = new NetworkVariable<bool>(false);
+    public NetworkVariable<bool> isNumberChosen = new NetworkVariable<bool>(false);
 
     public override void OnNetworkSpawn()
     {
@@ -64,5 +66,17 @@ public class Player : NetworkBehaviour
     public void ChooseNumberServerRpc(int num)
     {
         chosenNumber.Value = num;
+        isNumberChosen.Value = true;
+        if (BeautyContestLogic.Instance != null)
+        {
+            BeautyContestLogic.Instance.CheckIfAllPlayersChosen();
+        }
+    }
+
+    [ClientRpc]
+    public void UpdateHealthUIClientRpc(int newHealth, ClientRpcParams clientRpcParams = default)
+    {
+        // Only runs on the target client
+        GameManager.Instance.playerUI.UpdateHealthText(newHealth);
     }
 }
