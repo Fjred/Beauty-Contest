@@ -98,12 +98,16 @@ public class PlayerUI : MonoBehaviour
         DeactivateButtons();
     }
 
-    public void ActivateButtons(int num)
+    public void ActivateButtons()
     {
         foreach (Button btn in buttons)
         {
             btn.gameObject.SetActive(true);
         }
+
+        Cursor.visible = true;
+        Cursor.lockState = CursorLockMode.None;
+
     }
 
     public void DeactivateButtons()

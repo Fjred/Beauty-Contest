@@ -9,7 +9,7 @@ public class Player : NetworkBehaviour
 
     // Synced variables
     public NetworkVariable<int> chosenNumber = new NetworkVariable<int>(-10);
-    public NetworkVariable<int> lives = new NetworkVariable<int>(5);
+    public NetworkVariable<int> lives = new NetworkVariable<int>(2);
     public NetworkVariable<bool> isReady = new NetworkVariable<bool>(false);
     public NetworkVariable<bool> isNumberChosen = new NetworkVariable<bool>(false);
 
