@@ -16,9 +16,9 @@ public class BeautyContestLogic : NetworkBehaviour
     private double closestNumber = 1000;
     private double winnerNumber;
 
-    private bool elminated1 = false;
-    private bool elminated2 = false;
-    private bool elminated3 = false;
+    private bool rule1Active = false;
+    private bool rule2Active = false;
+    private bool rule3Active = false;
 
     private void Awake()
     {
@@ -36,6 +36,25 @@ public class BeautyContestLogic : NetworkBehaviour
         GameManager.Instance.playerUI.GenerateButtons(); // now runs on ALL clients
     }
 
+    void CheckForRuleUpdate()
+    {
+        foreach (Player p in GameManager.Instance.players)
+        {
+            if (!p.isNumberChosen.Value) return;
+        }
+    }
+
+
+    void CheckForDeath()
+    {
+        foreach (Player p in GameManager.Instance.players)
+        {
+            if (p.lives.Value <= 0)
+            {
+                p.alive.Value = false;
+            }
+        }
+    }
     void StartRound()
     {
         playerCount = 0;
@@ -49,7 +68,7 @@ public class BeautyContestLogic : NetworkBehaviour
     {
         foreach (Player p in GameManager.Instance.players)
         {
-            if (!p.isNumberChosen.Value) return;
+            if (!p.isNumberChosen.Value && p.alive.Value) return;
         }
         Calculate();
     }
@@ -101,6 +120,8 @@ public class BeautyContestLogic : NetworkBehaviour
             }
         }
 
+        CheckForDeath();
+
         // Make delay so game doesnt crash or bug
         if (IsServer) StartCoroutine(NextRoundAfterDelay());
 
@@ -117,5 +138,4 @@ public class BeautyContestLogic : NetworkBehaviour
     {
         GameManager.Instance.playerUI.ActivateButtons();
     }
-
 }

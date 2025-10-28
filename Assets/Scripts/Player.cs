@@ -12,6 +12,7 @@ public class Player : NetworkBehaviour
     public NetworkVariable<int> lives = new NetworkVariable<int>(2);
     public NetworkVariable<bool> isReady = new NetworkVariable<bool>(false);
     public NetworkVariable<bool> isNumberChosen = new NetworkVariable<bool>(false);
+    public NetworkVariable<bool> alive = new NetworkVariable<bool>(true);
 
     public override void OnNetworkSpawn()
     {

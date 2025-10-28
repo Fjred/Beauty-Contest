@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using TMPro;
+using Unity.Netcode;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.UI;
@@ -23,6 +25,8 @@ public class PlayerUI : MonoBehaviour
     [Header("Health essentials")]
     [SerializeField] private GameObject healthUIPrefab;
     private GameObject hlthObj;
+
+
     public void GenerateButtons()
     {
         if (generated) return; // prevent double spawning
@@ -72,10 +76,27 @@ public class PlayerUI : MonoBehaviour
         Cursor.lockState = CursorLockMode.None;
     }
 
-    private void OnNumberClicked(int num)
+
+    private void OnNumberClicked(int num) {
+        Player localPlayer = null; 
+        foreach (var p in FindObjectsOfType<Player>()) 
+        { 
+            if (p.IsOwner) { 
+                localPlayer = p; 
+                break; 
+            } 
+        }
+        Debug.Log("Clicked: " + num); 
+        chosenNumber = num; 
+        if (localPlayer != null && localPlayer.alive.Value) { 
+            localPlayer.ChooseNumberServerRpc(num); 
+        } 
+        DeactivateButtons(); 
+    }
+
+    public void ActivateButtons()
     {
         Player localPlayer = null;
-
         foreach (var p in FindObjectsOfType<Player>())
         {
             if (p.IsOwner)
@@ -84,22 +105,8 @@ public class PlayerUI : MonoBehaviour
                 break;
             }
         }
-        Debug.Log("Clicked: " + num);
+        if (!localPlayer.alive.Value) return;
 
-        Cursor.visible = false;
-        Cursor.lockState = CursorLockMode.Locked;
-
-        chosenNumber = num;
-
-        if (localPlayer != null)
-        {
-            localPlayer.ChooseNumberServerRpc(num);
-        }
-        DeactivateButtons();
-    }
-
-    public void ActivateButtons()
-    {
         foreach (Button btn in buttons)
         {
             btn.gameObject.SetActive(true);
@@ -116,6 +123,9 @@ public class PlayerUI : MonoBehaviour
         {
             btn.gameObject.SetActive(false);
         }
+
+        Cursor.visible = false;
+        Cursor.lockState = CursorLockMode.Locked;
     }
 
     public void DestroyAllButtons()
@@ -137,7 +147,7 @@ public class PlayerUI : MonoBehaviour
 
         rect.anchoredPosition = new Vector2(100, -50);
 
-        UpdateHealthText(5);
+        UpdateHealthText(2);
 
     }
     public void UpdateHealthText(int amount)
