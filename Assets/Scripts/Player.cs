@@ -13,6 +13,8 @@ public class Player : NetworkBehaviour
     public NetworkVariable<bool> isReady = new NetworkVariable<bool>(false);
     public NetworkVariable<bool> isNumberChosen = new NetworkVariable<bool>(false);
     public NetworkVariable<bool> alive = new NetworkVariable<bool>(true);
+    public NetworkVariable<bool> isDuplicate = new NetworkVariable<bool>(false);
+    public NetworkVariable<bool> validChoice = new NetworkVariable<bool>(true);
 
     public override void OnNetworkSpawn()
     {
