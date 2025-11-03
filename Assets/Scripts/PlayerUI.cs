@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Newtonsoft.Json.Bson;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using TMPro;
@@ -153,5 +154,10 @@ public class PlayerUI : MonoBehaviour
     public void UpdateHealthText(int amount)
     {
         hlthObj.GetComponentInChildren<TextMeshProUGUI>().text = amount.ToString();
+    }
+
+    public void WinningScreen()
+    {
+
     }
 }

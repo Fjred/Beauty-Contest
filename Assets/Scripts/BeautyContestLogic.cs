@@ -1,9 +1,10 @@
-using Unity.Netcode;
-using UnityEngine;
 using System;
-using UnityEngine.UI;
 using System.Collections;
+using System.Collections.Generic;
+using Unity.Netcode;
 using Unity.VisualScripting;
+using UnityEngine;
+using UnityEngine.UI;
 public class BeautyContestLogic : NetworkBehaviour
 {
     public static BeautyContestLogic Instance { get; private set; }
@@ -14,15 +15,16 @@ public class BeautyContestLogic : NetworkBehaviour
 
     private double _targetNumber;
 
-    private double _closestNumber = 1000;
+    private double _closestNumber;
     private double _winnerNumber;
 
-    private int _deadPlayers = 0;
+    public int _deadPlayers;
 
     private bool _rule1Active = false;
     private bool _rule2Active = false;
     private bool _rule3Active = false;
 
+    private Player _winner;
     private void Awake()
     {
         Instance = this;
@@ -33,6 +35,16 @@ public class BeautyContestLogic : NetworkBehaviour
         _playerCount = 0;
         _sumOfChoices = 0;
         _closestNumber = 1000;
+        _deadPlayers = 0;
+
+        foreach(Player p in GameManager.Instance.beautyContestPlayers)
+        {
+            p.lives.Value = 2;
+            p.alive.Value = true;
+            p.validChoice.Value = true;
+            p.isDuplicate.Value = false;
+            _playerCount++;
+        }
 
         GameManager.Instance.playerUI.GenerateHealthUI();
 
@@ -41,7 +53,6 @@ public class BeautyContestLogic : NetworkBehaviour
 
     void StartRound()
     {
-        _playerCount = 0;
         _sumOfChoices = 0;
         _closestNumber = 1000;
         CheckForNewRulesUpdate();
@@ -52,7 +63,7 @@ public class BeautyContestLogic : NetworkBehaviour
     {
         if (_deadPlayers >= 1) _rule1Active = true; 
         if (_deadPlayers >= 2) _rule2Active = true; 
-        if (_deadPlayers >= 3) _rule3Active = true; 
+        if (_playerCount == 2) _rule3Active = true; 
     }
 
     //Rule 1 checks if there are multiple players who chose the same number. If there are, disqualify them from this round and the left players continue to play by standart rules
@@ -66,8 +77,8 @@ public class BeautyContestLogic : NetworkBehaviour
         {
             for (int j = i + 1; j < _playerCount; j++)
             {
-                var p1 = GameManager.Instance.players[i];
-                var p2 = GameManager.Instance.players[j];
+                var p1 = GameManager.Instance.beautyContestPlayers[i];
+                var p2 = GameManager.Instance.beautyContestPlayers[j];
 
                 if (p1.chosenNumber.Value == p2.chosenNumber.Value)
                 {
@@ -78,7 +89,7 @@ public class BeautyContestLogic : NetworkBehaviour
         }
 
         // Apply penalties + invalidate choices
-        foreach (var p in GameManager.Instance.players)
+        foreach (var p in GameManager.Instance.beautyContestPlayers)
         {
             if (p.isDuplicate.Value)
             {
@@ -95,17 +106,17 @@ public class BeautyContestLogic : NetworkBehaviour
         // Return if rule isnt active
         if (!_rule2Active) return;
 
-        Debug.Log("Rule 2 apllied");
+        Debug.Log("Rule 2 applied");
         
         int roundedTarget = (int)Math.Round(target, MidpointRounding.AwayFromZero);
 
 
-        foreach (Player p in GameManager.Instance.players)
+        foreach (Player p in GameManager.Instance.beautyContestPlayers)
         {
             if (p.chosenNumber.Value == roundedTarget)
             {
                 Debug.Log("Player with exact match found");
-                foreach(Player k in GameManager.Instance.players)
+                foreach(Player k in GameManager.Instance.beautyContestPlayers)
                 {
                     if(k.OwnerClientId != p.OwnerClientId && k.alive.Value) UpdateHealth(k, 1);
                     Debug.Log("Health updated");
@@ -117,27 +128,63 @@ public class BeautyContestLogic : NetworkBehaviour
     {
         // Return if rule isnt active
         if (!_rule3Active) return;
+
+        if(_playerCount == 2)
+        {
+            var p1 = GameManager.Instance.beautyContestPlayers[0];
+            var p2 = GameManager.Instance.beautyContestPlayers[1];
+
+            if((p1.chosenNumber.Value == 100 ||  p2.chosenNumber.Value == 100) && (p1.chosenNumber.Value == 0 || p2.chosenNumber.Value == 0))
+            {
+                if(p1.chosenNumber.Value == 0) UpdateHealth(p1, 1);
+                else if(p2.chosenNumber.Value == 0) UpdateHealth(p2, 1);
+
+                p1.validChoice.Value = false;
+                p2.validChoice.Value = false;
+            }
+        }
     }
 
     void CheckForDeath()
-    {
-        _deadPlayers = 0;
+    { 
 
-        foreach (Player p in GameManager.Instance.players)
+        // Collect players to remove first
+        List<Player> toRemove = new List<Player>();
+
+        foreach (Player p in GameManager.Instance.beautyContestPlayers)
         {
             if (p.lives.Value <= 0)
             {
                 p.alive.Value = false;
+                toRemove.Add(p);
+                _deadPlayers++;
+                _playerCount--;
             }
-
-            if (!p.alive.Value) _deadPlayers++;
         }
 
+        // Remove AFTER enumeration
+        foreach (Player p in toRemove)
+        {
+            GameManager.Instance.beautyContestPlayers.Remove(p);
+        }
     }
+
+    void CheckForWinner()
+    {
+        if (_playerCount == 1)
+        {
+            _winner = GameManager.Instance.beautyContestPlayers[0];
+        }
+        else if(_playerCount == 0)
+        {
+            _winner = null;
+        }
+    }
+
     // Player.cs script runs this every time it gets information from PlayerUI that button was pressed
     public void CheckIfAllPlayersChosen()
     {
-        foreach (Player p in GameManager.Instance.players)
+        foreach (Player p in GameManager.Instance.beautyContestPlayers)
         {
             if (!p.isNumberChosen.Value && p.alive.Value) return; // Check if player has chosen a number while he is alive
         }
@@ -146,21 +193,12 @@ public class BeautyContestLogic : NetworkBehaviour
 
     void Calculate()
     {
-        foreach (Player p in GameManager.Instance.players)
-        {
-            if (p.alive.Value)
-            {
-                _playerCount++;
-                p.validChoice.Value = true;
-            }
-        }
+
         Debug.Log("Current player count: " + _playerCount);
 
         Rule1();
 
-        _playerCount = 0;
-
-        foreach (Player p in GameManager.Instance.players)
+        foreach (Player p in GameManager.Instance.beautyContestPlayers)
         {
             if (p.alive.Value)
             {
@@ -168,7 +206,6 @@ public class BeautyContestLogic : NetworkBehaviour
                 p.isNumberChosen.Value = false;
                 if (p.validChoice.Value)
                 {
-                    _playerCount++;
                     _sumOfChoices += p.chosenNumber.Value;
                 }
             }
@@ -179,9 +216,10 @@ public class BeautyContestLogic : NetworkBehaviour
         Debug.Log("Target is: " + _targetNumber + " because sum of Choices is " + _sumOfChoices + " and amount of people: " + _playerCount);
 
         Rule2(_targetNumber);
+        Rule3();
 
         // Find out the closest number players
-        foreach (Player p in GameManager.Instance.players)
+        foreach (Player p in GameManager.Instance.beautyContestPlayers)
         {
             if (p.alive.Value && p.validChoice.Value)
             {
@@ -196,7 +234,7 @@ public class BeautyContestLogic : NetworkBehaviour
             }
         }
 
-        foreach (Player p in GameManager.Instance.players)
+        foreach (Player p in GameManager.Instance.beautyContestPlayers)
         {
             if (p.chosenNumber.Value != _winnerNumber && p.alive.Value && p.validChoice.Value)
             {
@@ -207,11 +245,9 @@ public class BeautyContestLogic : NetworkBehaviour
         }
 
         CheckForDeath();
-
+        CheckForWinner();
         // Make delay so game doesnt crash or bug
-        if (IsServer) StartCoroutine(NextRoundAfterDelay());
-
-
+        if (IsServer && _playerCount >= 2) StartCoroutine(NextRoundAfterDelay());
     }
 
     private void UpdateHealth(Player p, int amount)

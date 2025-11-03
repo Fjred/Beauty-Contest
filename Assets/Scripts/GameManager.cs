@@ -11,8 +11,10 @@ public class GameManager : NetworkBehaviour
     public GameObject playerPrefab;
     public List<Player> players = new List<Player>();
 
+    [Header("Beauty Contest")]
     public bool generateButtons = false;
     public PlayerUI playerUI;
+    public List<Player> beautyContestPlayers = new List<Player>();
 
     void Awake()
     {

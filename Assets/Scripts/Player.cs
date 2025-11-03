@@ -59,6 +59,8 @@ public class Player : NetworkBehaviour
         isReady.Value = true;
         print(playerName + " is ready!");
 
+        GameManager.Instance.beautyContestPlayers.Add(this);
+
         if (GameManager.Instance != null)
         {
             GameManager.Instance.CheckAllPlayersReady();
