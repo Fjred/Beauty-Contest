@@ -16,6 +16,8 @@ public class GameManager : NetworkBehaviour
     public PlayerUI playerUI;
     public List<Player> beautyContestPlayers = new List<Player>();
 
+    public NetworkList<NetworkObjectReference> beautyContestPlayersIds = new NetworkList<NetworkObjectReference>();
+
     void Awake()
     {
         if (Instance == null)
@@ -55,7 +57,6 @@ public class GameManager : NetworkBehaviour
 
         Player playerScript = playerObj.GetComponent<Player>();
         players.Add(playerScript);
-        playerScript.playerName = "Player " + clientId;
     }
     public void CheckAllPlayersReady()
     {
@@ -73,4 +74,11 @@ public class GameManager : NetworkBehaviour
 
         BeautyContestLogic.Instance.StartGame();
     }
+
+    [ClientRpc]
+    void SendBeautyContestPlayersClientRpc(ulong[] playerIds)
+    {
+        // store them clientside and build UI
+    }
+
 }

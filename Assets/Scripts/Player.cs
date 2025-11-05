@@ -1,11 +1,12 @@
+using System.Collections.Generic;
 using System.Diagnostics;
 using Unity.Netcode;
 using Unity.VisualScripting;
 using UnityEngine;
-
+using Unity.Collections;
 public class Player : NetworkBehaviour
 {
-    public string playerName;
+    public NetworkVariable<FixedString128Bytes> playerName = new NetworkVariable<FixedString128Bytes>();
 
     // Synced variables
     public NetworkVariable<int> chosenNumber = new NetworkVariable<int>(-10);
@@ -15,26 +16,38 @@ public class Player : NetworkBehaviour
     public NetworkVariable<bool> alive = new NetworkVariable<bool>(true);
     public NetworkVariable<bool> isDuplicate = new NetworkVariable<bool>(false);
     public NetworkVariable<bool> validChoice = new NetworkVariable<bool>(true);
-
     public override void OnNetworkSpawn()
     {
+        // --- Components ---
         FirstPersonMovement controller = GetComponent<FirstPersonMovement>();
         Camera cam = GetComponentInChildren<Camera>();
         FirstPersonAudio audio = GetComponentInChildren<FirstPersonAudio>();
         GroundCheck ground = GetComponentInChildren<GroundCheck>();
         AudioListener listener = GetComponentInChildren<AudioListener>();
 
-        Cursor.visible = false;
-        Cursor.lockState = CursorLockMode.Locked;
+        // --- Cursor setup ---
+        if (IsOwner)
+        {
+            Cursor.visible = false;
+            Cursor.lockState = CursorLockMode.Locked;
+        }
+
+        // --- Enable only for owner ---
         if (!IsOwner)
         {
-            if (cam != null) cam.enabled = false; // only enable for owner
-            if (controller != null) controller.enabled = false; // only enable for owner
-            if (audio != null) audio.enabled = false; // only enable for owner
-            if (ground != null) ground.enabled = false; // only enable for owner
-            if (listener != null) listener.enabled = false; // only enable for owner
+            if (cam != null) cam.enabled = false;
+            if (controller != null) controller.enabled = false;
+            if (audio != null) audio.enabled = false;
+            if (ground != null) ground.enabled = false;
+            if (listener != null) listener.enabled = false;
         }
-        print($"Player spawned. Owner: {IsOwner}, ClientId: {OwnerClientId}");
+
+        // --- NetworkVariable setup ---
+        if (IsServer)
+        {
+            playerName.Value = new FixedString128Bytes("Player " + OwnerClientId);
+        }
+
     }
 
     void Update()
@@ -60,6 +73,7 @@ public class Player : NetworkBehaviour
         print(playerName + " is ready!");
 
         GameManager.Instance.beautyContestPlayers.Add(this);
+        GameManager.Instance.beautyContestPlayersIds.Add(this.NetworkObject);
 
         if (GameManager.Instance != null)
         {

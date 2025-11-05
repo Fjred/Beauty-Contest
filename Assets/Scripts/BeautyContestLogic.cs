@@ -11,12 +11,7 @@ public class BeautyContestLogic : NetworkBehaviour
 
     private int _playerCount;
     
-    private double _sumOfChoices;
-
     private double _targetNumber;
-
-    private double _closestNumber;
-    private double _winnerNumber;
 
     public int _deadPlayers;
 
@@ -33,8 +28,6 @@ public class BeautyContestLogic : NetworkBehaviour
     {
         // Reset everything at the start of the game
         _playerCount = 0;
-        _sumOfChoices = 0;
-        _closestNumber = 1000;
         _deadPlayers = 0;
 
         foreach(Player p in GameManager.Instance.beautyContestPlayers)
@@ -47,14 +40,11 @@ public class BeautyContestLogic : NetworkBehaviour
         }
 
         GameManager.Instance.playerUI.GenerateHealthUI();
-
-        GameManager.Instance.playerUI.GenerateButtons(); // now runs on ALL clients
+        GameManager.Instance.playerUI.GenerateButtons();
     }
 
     void StartRound()
     {
-        _sumOfChoices = 0;
-        _closestNumber = 1000;
         CheckForNewRulesUpdate();
         ActivateButtonsClientRpc();
     }
@@ -80,11 +70,10 @@ public class BeautyContestLogic : NetworkBehaviour
                 var p1 = GameManager.Instance.beautyContestPlayers[i];
                 var p2 = GameManager.Instance.beautyContestPlayers[j];
 
-                if (p1.chosenNumber.Value == p2.chosenNumber.Value)
-                {
-                    p1.isDuplicate.Value = true;
-                    p2.isDuplicate.Value = true;
-                }
+                if (p1.chosenNumber.Value != p2.chosenNumber.Value) continue;
+                
+                p1.isDuplicate.Value = true;
+                p2.isDuplicate.Value = true;
             }
         }
 
@@ -97,10 +86,8 @@ public class BeautyContestLogic : NetworkBehaviour
                 p.validChoice.Value = false;
             }
         }
-
-
     }
-    // Rule 2 checks if any player chose the exact number, and if they add, all the other players get -2
+    // Rule 2 checks if any player chose the exact number, and if they do, all the other players get -2
     void Rule2(double target)
     {
         // Return if rule isnt active
@@ -110,18 +97,23 @@ public class BeautyContestLogic : NetworkBehaviour
         
         int roundedTarget = (int)Math.Round(target, MidpointRounding.AwayFromZero);
 
+        var players = GameManager.Instance.beautyContestPlayers;
 
-        foreach (Player p in GameManager.Instance.beautyContestPlayers)
+        foreach (var winner in players)
         {
-            if (p.chosenNumber.Value == roundedTarget)
+            if (winner.chosenNumber.Value != roundedTarget) continue;
+
+            Debug.Log($"Player {winner.OwnerClientId} matched target {roundedTarget}");
+
+            foreach (var other in players)
             {
-                Debug.Log("Player with exact match found");
-                foreach(Player k in GameManager.Instance.beautyContestPlayers)
-                {
-                    if(k.OwnerClientId != p.OwnerClientId && k.alive.Value) UpdateHealth(k, 1);
-                    Debug.Log("Health updated");
-                }
+                if (other.OwnerClientId == winner.OwnerClientId || !other.alive.Value) continue;
+
+                UpdateHealth(other, 1);
+                Debug.Log($"Health updated for {other.OwnerClientId}");
             }
+
+            break; // optional: only 1 winner possible, so exit outer loop
         }
     }
     void Rule3()
@@ -129,25 +121,25 @@ public class BeautyContestLogic : NetworkBehaviour
         // Return if rule isnt active
         if (!_rule3Active) return;
 
-        if(_playerCount == 2)
-        {
-            var p1 = GameManager.Instance.beautyContestPlayers[0];
-            var p2 = GameManager.Instance.beautyContestPlayers[1];
+        if (_playerCount != 2) return;
 
-            if((p1.chosenNumber.Value == 100 ||  p2.chosenNumber.Value == 100) && (p1.chosenNumber.Value == 0 || p2.chosenNumber.Value == 0))
-            {
-                if(p1.chosenNumber.Value == 0) UpdateHealth(p1, 1);
-                else if(p2.chosenNumber.Value == 0) UpdateHealth(p2, 1);
+        var p1 = GameManager.Instance.beautyContestPlayers[0];
+        var p2 = GameManager.Instance.beautyContestPlayers[1];
 
-                p1.validChoice.Value = false;
-                p2.validChoice.Value = false;
-            }
-        }
+        int v1 = p1.chosenNumber.Value;
+        int v2 = p2.chosenNumber.Value;
+
+        if (!((v1 == 100 || v2 == 100) && (v1 == 0 || v2 == 0))) return;
+
+        if (v1 == 0) UpdateHealth(p1, 1);
+        else if (v2 == 0) UpdateHealth(p2, 1);
+
+        p1.validChoice.Value = false;
+        p2.validChoice.Value = false;
     }
 
     void CheckForDeath()
     { 
-
         // Collect players to remove first
         List<Player> toRemove = new List<Player>();
 
@@ -166,6 +158,7 @@ public class BeautyContestLogic : NetworkBehaviour
         foreach (Player p in toRemove)
         {
             GameManager.Instance.beautyContestPlayers.Remove(p);
+            GameManager.Instance.beautyContestPlayersIds.Remove(p.NetworkObject);
         }
     }
 
@@ -193,27 +186,28 @@ public class BeautyContestLogic : NetworkBehaviour
 
     void Calculate()
     {
+        double sumOfChoices = 0;
+        double closestNumber = double.MaxValue;
+        double winnerNumber = 0;
 
-        Debug.Log("Current player count: " + _playerCount);
+        Debug.Log($"Current player count: {_playerCount}");
 
         Rule1();
 
         foreach (Player p in GameManager.Instance.beautyContestPlayers)
         {
-            if (p.alive.Value)
-            {
-                // Revert the fact that player chose a number
-                p.isNumberChosen.Value = false;
-                if (p.validChoice.Value)
-                {
-                    _sumOfChoices += p.chosenNumber.Value;
-                }
-            }
+            if (!p.alive.Value) continue;
+
+            p.isNumberChosen.Value = false;
+
+            if (!p.validChoice.Value) continue;
+
+            sumOfChoices += p.chosenNumber.Value;
         }
 
-        _targetNumber = _sumOfChoices / _playerCount * 0.8;
+        _targetNumber = sumOfChoices / _playerCount * 0.8;
 
-        Debug.Log("Target is: " + _targetNumber + " because sum of Choices is " + _sumOfChoices + " and amount of people: " + _playerCount);
+        Debug.Log("Target is: " + _targetNumber + " because sum of Choices is " + sumOfChoices + " and amount of people: " + _playerCount);
 
         Rule2(_targetNumber);
         Rule3();
@@ -226,17 +220,17 @@ public class BeautyContestLogic : NetworkBehaviour
                 double tempClosest;
 
                 tempClosest = Math.Abs(_targetNumber - p.chosenNumber.Value);
-                if (tempClosest < _closestNumber)
+                if (tempClosest < closestNumber)
                 {
-                    _closestNumber = tempClosest;
-                    _winnerNumber = p.chosenNumber.Value;
+                    closestNumber = tempClosest;
+                    winnerNumber = p.chosenNumber.Value;
                 }
             }
         }
 
         foreach (Player p in GameManager.Instance.beautyContestPlayers)
         {
-            if (p.chosenNumber.Value != _winnerNumber && p.alive.Value && p.validChoice.Value)
+            if (p.chosenNumber.Value != winnerNumber && p.alive.Value && p.validChoice.Value)
             {
                 UpdateHealth(p, 1);
             }
@@ -246,6 +240,9 @@ public class BeautyContestLogic : NetworkBehaviour
 
         CheckForDeath();
         CheckForWinner();
+
+        GenerateScoreScreenUIClientRpc();
+
         // Make delay so game doesnt crash or bug
         if (IsServer && _playerCount >= 2) StartCoroutine(NextRoundAfterDelay());
     }
@@ -271,9 +268,17 @@ public class BeautyContestLogic : NetworkBehaviour
         StartRound();
     }
 
+
     [ClientRpc]
     void ActivateButtonsClientRpc()
     {
         GameManager.Instance.playerUI.ActivateButtons();
     }
+    [ClientRpc]
+    void GenerateScoreScreenUIClientRpc()
+    {
+        // ADD DELAYYYYYYYYY 
+        GameManager.Instance.playerUI.GenerateScoreScreenUI();
+    }
+
 }
