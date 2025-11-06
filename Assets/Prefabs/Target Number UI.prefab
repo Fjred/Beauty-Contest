@@ -87,7 +87,7 @@ GameObject:
   - component: {fileID: 4353811109234363320}
   - component: {fileID: 5223880499156857199}
   m_Layer: 5
-  m_Name: Target Score
+  m_Name: Target Number Text
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -221,7 +221,7 @@ GameObject:
   m_Component:
   - component: {fileID: 494738024154598585}
   m_Layer: 5
-  m_Name: Score UI
+  m_Name: Target Number UI
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

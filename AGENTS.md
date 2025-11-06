@@ -2,7 +2,7 @@
 - Project name: Beauty Contest
 - Unity version: Unity 6000.0.28f1
 - Active game object:
-  - Name: Canvas
+  - Name: BeautyContestLogic
   - Tag: Untagged
-  - Layer: UI
+  - Layer: Default
 <!-- UNITY CODE ASSIST INSTRUCTIONS END -->

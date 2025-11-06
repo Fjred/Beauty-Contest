@@ -72,13 +72,11 @@ public class GameManager : NetworkBehaviour
     {
         Debug.Log("Game Started on: " + NetworkManager.Singleton.LocalClientId);
 
-        BeautyContestLogic.Instance.StartGame();
-    }
+        // Server updates game state
+        BeautyContestLogic.Instance.StartGameServer();
 
-    [ClientRpc]
-    void SendBeautyContestPlayersClientRpc(ulong[] playerIds)
-    {
-        // store them clientside and build UI
+        // Server tells clients to spawn UI
+        BeautyContestLogic.Instance.StartGameClientRpc();
     }
 
 }

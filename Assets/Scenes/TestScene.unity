@@ -190,6 +190,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   ShowTopMostFoldoutHeaderGroup: 1
+  targetNumber: 0
   _deadPlayers: 0
 --- !u!1 &393486907
 GameObject:
@@ -1125,7 +1126,8 @@ MonoBehaviour:
   healthUIPrefab: {fileID: 8934608015018081124, guid: d87833c76d030264fbfb7503a9415621, type: 3}
   backgroundUIPrefab: {fileID: 4836589714118908443, guid: 6a5eeb9b17bb7004cb1eee8d3f0af2da, type: 3}
   playerUIPrefab: {fileID: 6670223838429594231, guid: 3ebb50971725fcb4e8e6b5a3e998816b, type: 3}
-  scoreUIPrefab: {fileID: 8421309057217871392, guid: ae75fb547c0c5d44e9b15fdeed5d7eeb, type: 3}
+  targetNumberUIPrefab: {fileID: 8421309057217871392, guid: ae75fb547c0c5d44e9b15fdeed5d7eeb, type: 3}
+  baseSpacing: 130
 --- !u!1 &2006881996
 GameObject:
   m_ObjectHideFlags: 0

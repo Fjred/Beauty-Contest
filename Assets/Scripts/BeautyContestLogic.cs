@@ -1,12 +1,14 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Unity.Collections;
 using Unity.Netcode;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.UI;
 public class BeautyContestLogic : NetworkBehaviour
 {
+    // Clients are not running the game, they are only running the UI;
     public static BeautyContestLogic Instance { get; private set; }
 
     private int _playerCount;
@@ -24,13 +26,12 @@ public class BeautyContestLogic : NetworkBehaviour
     {
         Instance = this;
     }
-    public void StartGame()
+    public void StartGameServer()
     {
-        // Reset everything at the start of the game
         _playerCount = 0;
         _deadPlayers = 0;
 
-        foreach(Player p in GameManager.Instance.beautyContestPlayers)
+        foreach (Player p in GameManager.Instance.beautyContestPlayers)
         {
             p.lives.Value = 2;
             p.alive.Value = true;
@@ -38,11 +39,15 @@ public class BeautyContestLogic : NetworkBehaviour
             p.isDuplicate.Value = false;
             _playerCount++;
         }
+    }
 
+    // ClientRpc — only spawns UI on all clients
+    [ClientRpc]
+    public void StartGameClientRpc()
+    {
         GameManager.Instance.playerUI.GenerateHealthUI();
         GameManager.Instance.playerUI.GenerateButtons();
     }
-
     void StartRound()
     {
         CheckForNewRulesUpdate();
@@ -54,6 +59,11 @@ public class BeautyContestLogic : NetworkBehaviour
         if (_deadPlayers >= 1) _rule1Active = true; 
         if (_deadPlayers >= 2) _rule2Active = true; 
         if (_playerCount == 2) _rule3Active = true; 
+    }
+    [ClientRpc]
+    void ActivateButtonsClientRpc()
+    {
+        GameManager.Instance.playerUI.ActivateButtons();
     }
 
     //Rule 1 checks if there are multiple players who chose the same number. If there are, disqualify them from this round and the left players continue to play by standart rules
@@ -90,7 +100,7 @@ public class BeautyContestLogic : NetworkBehaviour
     // Rule 2 checks if any player chose the exact number, and if they do, all the other players get -2
     void Rule2(double target)
     {
-        // Return if rule isnt active
+        // Return if rule isn't active
         if (!_rule2Active) return;
 
         Debug.Log("Rule 2 applied");
@@ -113,12 +123,12 @@ public class BeautyContestLogic : NetworkBehaviour
                 Debug.Log($"Health updated for {other.OwnerClientId}");
             }
 
-            break; // optional: only 1 winner possible, so exit outer loop
+            break; //  only 1 winner possible, so exit outer loop
         }
     }
     void Rule3()
     {
-        // Return if rule isnt active
+        // Return if rule isn't active
         if (!_rule3Active) return;
 
         if (_playerCount != 2) return;
@@ -238,13 +248,9 @@ public class BeautyContestLogic : NetworkBehaviour
             p.isDuplicate.Value = false;
         }
 
-        CheckForDeath();
-        CheckForWinner();
+        // Make delay so game registers all the scores
+        if (IsServer) StartCoroutine(ShowResultsAfterDelay());
 
-        GenerateScoreScreenUIClientRpc();
-
-        // Make delay so game doesnt crash or bug
-        if (IsServer && _playerCount >= 2) StartCoroutine(NextRoundAfterDelay());
     }
 
     private void UpdateHealth(Player p, int amount)
@@ -262,23 +268,29 @@ public class BeautyContestLogic : NetworkBehaviour
         p.UpdateHealthUIClientRpc(p.lives.Value, clientParams);
     }
 
-    private IEnumerator NextRoundAfterDelay()
+    private IEnumerator ShowResultsAfterDelay()
     {
         yield return new WaitForSeconds(2f);
-        StartRound();
-    }
+        // Show chosen scores to all players
+        GenerateScoreScreenUIClientRpc(_targetNumber);
 
+        yield return new WaitForSeconds(1f);
+        // Check for deaths and check if there is a winner
+        CheckForDeath();
+        CheckForWinner();
+
+
+        // Make delay so game doesn't crash or bug, Start next round if 2 or more players still alive
+        if (IsServer && _playerCount >= 2)
+        {
+            yield return new WaitForSeconds(2f);
+            StartRound();
+        }
+    }
 
     [ClientRpc]
-    void ActivateButtonsClientRpc()
+    void GenerateScoreScreenUIClientRpc(double targetNumber)
     {
-        GameManager.Instance.playerUI.ActivateButtons();
+        GameManager.Instance.playerUI.GenerateScoreScreenUI(targetNumber);
     }
-    [ClientRpc]
-    void GenerateScoreScreenUIClientRpc()
-    {
-        // ADD DELAYYYYYYYYY 
-        GameManager.Instance.playerUI.GenerateScoreScreenUI();
-    }
-
 }

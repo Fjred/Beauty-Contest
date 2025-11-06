@@ -31,7 +31,7 @@ public class PlayerUI : MonoBehaviour
     [Header("Score UI")]
     [SerializeField] private GameObject backgroundUIPrefab;
     [SerializeField] private GameObject playerUIPrefab;
-    [SerializeField] private GameObject scoreUIPrefab;
+    [SerializeField] private GameObject targetNumberUIPrefab;
 
     public float baseSpacing = 130f;
 
@@ -163,17 +163,20 @@ public class PlayerUI : MonoBehaviour
         hlthObj.GetComponentInChildren<TextMeshProUGUI>().text = amount.ToString();
     }
 
-    public void GenerateScoreScreenUI()
+    public void GenerateScoreScreenUI(double targetNumber)
     {
         // Make sure all players are spawned before calling this
         Debug.Log("Generating score UI...");
 
-        // Clear old UI
-        foreach (Transform child in transform)
-            Destroy(child.gameObject);
-
         // Instantiate background
         Instantiate(backgroundUIPrefab, transform);
+
+        // Instantiate target number
+        GameObject targetNumUIObj = Instantiate(targetNumberUIPrefab, transform);
+        // Set number text
+        var targetNumberText = targetNumUIObj.GetComponentInChildren<TextMeshProUGUI>();
+
+        if (targetNumberText != null) targetNumberText.text = targetNumber.ToString();
 
         int playerCount = GameManager.Instance.beautyContestPlayersIds.Count;
 
@@ -197,8 +200,8 @@ public class PlayerUI : MonoBehaviour
             GameObject playerObj = Instantiate(playerUIPrefab, transform);
 
             // Set number text
-            var scoreText = playerObj.GetComponentInChildren<TextMeshProUGUI>();
-            if (scoreText != null) scoreText.text = player.chosenNumber.Value.ToString();
+            var chosenNumberText = playerObj.GetComponentInChildren<TextMeshProUGUI>();
+            if (chosenNumberText != null) chosenNumberText.text = player.chosenNumber.Value.ToString();
 
             // Position based on total players
             RectTransform rect = playerObj.GetComponent<RectTransform>();
